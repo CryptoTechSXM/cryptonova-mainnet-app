@@ -2975,7 +2975,15 @@ async function loadDashboardData() {
       // Max deployed tier: 3 (T3 live). Increase when T4+ deployed.
       const MAX_DEPLOYED_TIER = 10; // v8.7: all 10 tiers live
       const curTierCycles = await tr.tierCycles(userAddr, Math.max(highestTier - 1, 0)).catch(() => 0n);
-      const canUpgrade = Number(curTierCycles) >= 1 && highestTier < MAX_DEPLOYED_TIER;
+      // v8.19 fix (ported from testnet 2026-06-20): without this, upgrade
+      // eligibility only ever fires after a FULL completed MatB cycle, which
+      // defeats the V8.14/V8.15 contract-side "crossed to MatB = eligible now"
+      // rule. Check whichever tier the member currently sits in.
+      const _curMatBAddrDash = ADDRS['T' + highestTier] ? ADDRS['T' + highestTier].matB : null;
+      const _inCurMatBDash = _curMatBAddrDash
+        ? await new ethers.Contract(_curMatBAddrDash, MATRIX_ABI, rp).isActiveInMatrix(userAddr).catch(() => false)
+        : false;
+      const canUpgrade = (Number(curTierCycles) >= 1 || _inCurMatBDash) && highestTier < MAX_DEPLOYED_TIER;
       upgradeSection.style.display = canUpgrade ? 'block' : 'none';
       if (canUpgrade) {
         const UPGRADE_NAMES = ['--','T2 -- Nova Rise','T3 -- Nova Star','T4 -- Nova Prime','T5 -- SuperNova Genesis','T6 -- SuperNova Elite','T7 -- SuperNova Spark'];
@@ -2989,7 +2997,10 @@ async function loadDashboardData() {
         setText('upgrade-fee',         fmt6(nextFeeRaw));
         setText('upgrade-usdc-bal',    fmt6(uBal));
         const c = Number(curTierCycles);
-        setText('upgrade-desc', `You have completed ${c} T${highestTier} cycle${c !== 1 ? 's' : ''} and qualify for a manual tier upgrade. Pay ${fmt6(nextFeeRaw)} USDC from your wallet to enter the next tier.`);
+        const _qualifyDesc = c >= 1
+          ? `You have completed ${c} T${highestTier} cycle${c !== 1 ? 's' : ''} and qualify for a manual tier upgrade.`
+          : `You've crossed to T${highestTier} Matrix B and qualify for a manual tier upgrade now — no need to wait for the cycle to finish.`;
+        setText('upgrade-desc', `${_qualifyDesc} Pay ${fmt6(nextFeeRaw)} USDC from your wallet to enter the next tier.`);
         const approveBtn = document.getElementById('btn-dash-approve');
         if (approveBtn) { approveBtn.disabled = false; approveBtn.classList.remove('btn-ghost'); approveBtn.classList.add('btn-green'); }
       }
