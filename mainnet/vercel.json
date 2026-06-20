@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "regions": ["iad1"],
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "/api/:path*" },
+    { "source": "/terms",      "destination": "/terms.html" },
+    { "source": "/terms.html", "destination": "/terms.html" },
+    { "source": "/faq",        "destination": "/faq.html" },
+    { "source": "/faq.html",   "destination": "/faq.html" },
+    { "source": "/(.*)",       "destination": "/index.html" }
+  ]
+}
