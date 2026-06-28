@@ -2142,6 +2142,17 @@ window.addEventListener('DOMContentLoaded', async () => {
       if (accounts && accounts.length > 0) await connectWallet(true);
       else localStorage.removeItem('cnova_connected'); // wallet was locked/disconnected
     } catch(e) {}
+  } else if (!window.ethereum && localStorage.getItem('cnova_connected')) {
+    // MetaMask mobile injects window.ethereum after DOMContentLoaded — retry after 800ms
+    setTimeout(async () => {
+      if (window.ethereum) {
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+          if (accounts && accounts.length > 0) await connectWallet(true);
+          else localStorage.removeItem('cnova_connected');
+        } catch(e) {}
+      }
+    }, 800);
   }
   if (window.ethereum) {
     window.ethereum.on('chainChanged', (chainId) => {
@@ -2184,9 +2195,11 @@ async function connectWallet(silent=false) {
     const walletName = detectWalletName();
     provider = new ethers.BrowserProvider(window.ethereum);
     // Silent reconnect uses eth_accounts (no popup); explicit connect uses eth_requestAccounts
+    let _silentAccs = null;
     if (silent) {
       const accs = await window.ethereum.request({ method: 'eth_accounts' });
       if (!accs || accs.length === 0) { isConnecting = false; return; }
+      _silentAccs = accs;
     } else {
       await provider.send('eth_requestAccounts', []);
     }
@@ -2194,14 +2207,17 @@ async function connectWallet(silent=false) {
     const chainId = Number(network.chainId);
     if (chainId !== CHAIN_ID) {
       showNetworkBanner();
-      reportEvent('WRONG_NETWORK', {
+      if (!silent) reportEvent('WRONG_NETWORK', {
         wallet: walletName, action: 'connect',
         network: String(chainId),
         error: `Expected chainId ${CHAIN_ID}, got ${chainId}`,
       });
       return;
     }
-    signer = await provider.getSigner();
+    // Use JsonRpcSigner for silent path — avoids eth_requestAccounts popup (Rabby/MetaMask mobile)
+    signer = _silentAccs
+      ? new ethers.JsonRpcSigner(provider, _silentAccs[0])
+      : await provider.getSigner();
     userAddr = await signer.getAddress();
     // Report unsupported/unrecognised wallet names for tracking
     if (!['MetaMask','Rabby'].includes(walletName)) {
@@ -2238,14 +2254,14 @@ async function switchToBase() {
   if (!window.ethereum) return;
   document.getElementById('nb-switch-btn').innerHTML = '<span class="spinner"></span> Switching…';
   try {
-    await window.ethereum.request({ method:'wallet_switchEthereumChain', params:[{chainId:'0x14A34'}] });
+    await window.ethereum.request({ method:'wallet_switchEthereumChain', params:[{chainId:'0x2105'}] });
     hideNetworkBanner();
     if (!userAddr) await connectWallet();
   } catch(e) {
     if (e.code === 4902 || e.code === -32603) {
       try {
         await window.ethereum.request({ method:'wallet_addEthereumChain', params:[{
-          chainId:'0x14A34', chainName:'Base',
+          chainId:'0x2105', chainName:'Base',
           nativeCurrency:{name:'ETH',symbol:'ETH',decimals:18},
           rpcUrls:['https://mainnet.base.org'],
           blockExplorerUrls:['https://basescan.org']
