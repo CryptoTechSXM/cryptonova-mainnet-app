@@ -5,62 +5,215 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>CryptoNova — Launching July 19</title>
   <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{background:#0a0e1a;color:#e2e8f0;font-family:"Segoe UI",system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
-    .logo{font-size:clamp(28px,6vw,48px);font-weight:800;letter-spacing:-1px;margin-bottom:8px}
-    .logo span{color:#00e5a0}
-    .badge{display:inline-block;font-size:11px;background:rgba(0,229,160,0.12);color:#00e5a0;border:1px solid #00b37d;border-radius:4px;padding:3px 10px;margin-bottom:32px;letter-spacing:0.5px}
-    .headline{font-size:clamp(14px,3vw,18px);color:#94a3b8;margin-bottom:6px}
-    .date{font-size:clamp(16px,3.5vw,22px);font-weight:600;color:#e2e8f0;margin-bottom:40px}
-    .date em{color:#00e5a0;font-style:normal}
-    .countdown{display:flex;gap:clamp(12px,3vw,24px);justify-content:center;margin-bottom:48px}
-    .unit{background:#111827;border:1px solid #1f2d47;border-radius:12px;padding:clamp(16px,4vw,28px) clamp(20px,5vw,36px)}
-    .unit .num{font-size:clamp(32px,8vw,64px);font-weight:800;color:#00e5a0;line-height:1;font-variant-numeric:tabular-nums}
-    .unit .label{font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-top:6px}
-    .divider{color:#1f2d47;font-size:clamp(28px,6vw,52px);font-weight:300;align-self:center;margin-top:-16px}
-    .links{display:flex;flex-direction:column;gap:12px;align-items:center}
-    .btn-ea{background:#00e5a0;color:#0a0e1a;font-weight:700;padding:14px 32px;border-radius:10px;text-decoration:none;font-size:15px;transition:opacity .2s}
-    .btn-ea:hover{opacity:0.85}
-    .btn-tg{color:#94a3b8;font-size:13px;text-decoration:none;border:1px solid #1f2d47;border-radius:8px;padding:10px 24px;transition:all .2s}
-    .btn-tg:hover{color:#e2e8f0;border-color:#3b82f6}
-    .juneteenth{margin-top:40px;font-size:12px;color:#475569;max-width:340px;line-height:1.6}
-    .juneteenth strong{color:#64748b}
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0a0e1a;
+      color: #e2e8f0;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      text-align: center;
+    }
+
+    .logo {
+      font-size: clamp(32px, 9vw, 52px);
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 8px;
+      line-height: 1.1;
+    }
+    .logo span { color: #00e5a0; }
+
+    .badge {
+      display: inline-block;
+      font-size: 10px;
+      background: rgba(0,229,160,0.12);
+      color: #00e5a0;
+      border: 1px solid #00b37d;
+      border-radius: 4px;
+      padding: 3px 10px;
+      margin-bottom: 28px;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+    }
+
+    .headline {
+      font-size: clamp(13px, 3.5vw, 17px);
+      color: #94a3b8;
+      margin-bottom: 4px;
+    }
+
+    .date {
+      font-size: clamp(15px, 4vw, 22px);
+      font-weight: 600;
+      color: #e2e8f0;
+      margin-bottom: 32px;
+    }
+    .date em { color: #00e5a0; font-style: normal; }
+
+    /* ── Countdown ── */
+    .countdown {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 6px;
+      margin-bottom: 36px;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .unit {
+      flex: 1;
+      background: #111827;
+      border: 1px solid #1f2d47;
+      border-radius: 10px;
+      padding: 12px 4px;
+      min-width: 0;
+    }
+
+    .unit .num {
+      font-size: clamp(26px, 7.5vw, 56px);
+      font-weight: 800;
+      color: #00e5a0;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+      display: block;
+    }
+
+    .unit .lbl {
+      font-size: clamp(8px, 2vw, 11px);
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-top: 5px;
+      display: block;
+    }
+
+    /* Colons — hidden on small screens, shown when space allows */
+    .divider {
+      display: none;
+      color: #2d3f5f;
+      font-size: clamp(24px, 6vw, 48px);
+      font-weight: 300;
+      padding-top: 10px;
+      flex-shrink: 0;
+    }
+
+    @media (min-width: 400px) {
+      .countdown { gap: 8px; }
+      .unit { padding: 14px 6px; border-radius: 12px; }
+    }
+
+    @media (min-width: 480px) {
+      .divider { display: block; }
+      .countdown { gap: 0; }
+      .unit { padding: 16px 10px; }
+      .unit .lbl { font-size: 10px; }
+    }
+
+    @media (min-width: 560px) {
+      .unit { padding: 20px 16px; }
+    }
+
+    /* ── Links ── */
+    .links {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: stretch;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    .btn-ea {
+      background: #00e5a0;
+      color: #0a0e1a;
+      font-weight: 700;
+      padding: 15px 28px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-size: 15px;
+      transition: opacity .2s;
+      display: block;
+    }
+    .btn-ea:hover { opacity: 0.85; }
+
+    .btn-tg {
+      color: #94a3b8;
+      font-size: 13px;
+      text-decoration: none;
+      border: 1px solid #1f2d47;
+      border-radius: 8px;
+      padding: 12px 24px;
+      transition: all .2s;
+      display: block;
+    }
+    .btn-tg:hover { color: #e2e8f0; border-color: #3b82f6; }
+
+    .juneteenth {
+      margin-top: 36px;
+      font-size: 12px;
+      color: #475569;
+      max-width: 300px;
+      line-height: 1.7;
+    }
+    .juneteenth strong { color: #64748b; }
   </style>
 </head>
 <body>
+
   <div class="logo">Crypto<span>Nova</span></div>
-  <div class="badge">MAINNET · BASE CHAIN</div>
+  <div class="badge">Mainnet · Base Chain</div>
+
   <div class="headline">Official launch in</div>
   <div class="date">July 19, 2026 &nbsp;·&nbsp; <em>12:00 PM EST</em></div>
+
   <div class="countdown">
-    <div class="unit"><div class="num" id="cd-d">--</div><div class="label">Days</div></div>
+    <div class="unit">
+      <span class="num" id="cd-d">--</span>
+      <span class="lbl">Days</span>
+    </div>
     <div class="divider">:</div>
-    <div class="unit"><div class="num" id="cd-h">--</div><div class="label">Hours</div></div>
+    <div class="unit">
+      <span class="num" id="cd-h">--</span>
+      <span class="lbl">Hours</span>
+    </div>
     <div class="divider">:</div>
-    <div class="unit"><div class="num" id="cd-m">--</div><div class="label">Minutes</div></div>
+    <div class="unit">
+      <span class="num" id="cd-m">--</span>
+      <span class="lbl">Min</span>
+    </div>
     <div class="divider">:</div>
-    <div class="unit"><div class="num" id="cd-s">--</div><div class="label">Seconds</div></div>
+    <div class="unit">
+      <span class="num" id="cd-s">--</span>
+      <span class="lbl">Sec</span>
+    </div>
   </div>
+
   <div class="links">
     <a class="btn-ea" href="https://ea.cryptonova.ai">Early Access &rarr;</a>
     <a class="btn-tg" href="https://t.me/CryptoNovaMatrix" target="_blank">Join the Community on Telegram</a>
   </div>
-  <p class="juneteenth"><strong>Why July 19?</strong> CryptoNova officially launches on Juneteenth — a date that stands for financial freedom, community wealth, and self-sovereignty. We'll see you there.</p>
+
+  <p class="juneteenth">
+    <strong>Why July 19?</strong> CryptoNova launches on Juneteenth — a date that stands for financial freedom, community wealth, and self-sovereignty. We'll see you there.
+  </p>
 
   <script>
     var LAUNCH = new Date('2026-07-19T16:00:00Z');
-
-    // If we're already past launch, go to the real site
-    if (Date.now() >= LAUNCH.getTime()) {
-      window.location.replace('/');
-    }
+    if (Date.now() >= LAUNCH.getTime()) window.location.replace('/');
 
     function pad(n) { return n < 10 ? '0' + n : '' + n; }
     function tick() {
-      var d = Math.max(0, LAUNCH - Date.now());
-      if (d === 0) { window.location.replace('/'); return; }
-      var s = Math.floor(d / 1000);
-      document.getElementById('cd-d').textContent = pad(Math.floor(s / 86400));
+      var diff = Math.max(0, LAUNCH - Date.now());
+      if (diff === 0) { window.location.replace('/'); return; }
+      var s = Math.floor(diff / 1000);
+      document.getElementById('cd-d').textContent = Math.floor(s / 86400);
       document.getElementById('cd-h').textContent = pad(Math.floor(s % 86400 / 3600));
       document.getElementById('cd-m').textContent = pad(Math.floor(s % 3600 / 60));
       document.getElementById('cd-s').textContent = pad(s % 60);
@@ -68,5 +221,6 @@
     tick();
     setInterval(tick, 1000);
   </script>
+
 </body>
 </html>
