@@ -5,8 +5,10 @@
     { "source": "/api/:path*", "destination": "/api/:path*" },
     { "source": "/terms",      "destination": "/terms.html" },
     { "source": "/terms.html", "destination": "/terms.html" },
-    { "source": "/faq",        "destination": "/faq.html" },
-    { "source": "/faq.html",   "destination": "/faq.html" },
-    { "source": "/(.*)",       "destination": "/index.html" }
+    { "source": "/faq",          "destination": "/faq.html" },
+    { "source": "/faq.html",     "destination": "/faq.html" },
+    { "source": "/coupon",       "destination": "/coupon.html" },
+    { "source": "/coupon.html",  "destination": "/coupon.html" },
+    { "source": "/(.*)",         "destination": "/index.html" }
   ]
 }

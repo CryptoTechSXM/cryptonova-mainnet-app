@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>CryptoNova — Early Access</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0a0e1a;
+      color: #e2e8f0;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      text-align: center;
+    }
+
+    .logo { font-size: clamp(30px, 8vw, 48px); font-weight: 800; letter-spacing: -1px; margin-bottom: 8px; }
+    .logo span { color: #00e5a0; }
+
+    .badge {
+      display: inline-block; font-size: 10px; text-transform: uppercase;
+      background: rgba(0,229,160,0.12); color: #00e5a0; border: 1px solid #00b37d;
+      border-radius: 4px; padding: 3px 10px; margin-bottom: 28px; letter-spacing: 0.6px;
+    }
+
+    /* ── Countdown (shown before 9am) ── */
+    #phase-countdown { width: 100%; max-width: 440px; }
+
+    .headline { font-size: clamp(13px, 3.5vw, 17px); color: #94a3b8; margin-bottom: 4px; }
+    .date { font-size: clamp(15px, 4vw, 22px); font-weight: 600; color: #e2e8f0; margin-bottom: 32px; }
+    .date em { color: #00e5a0; font-style: normal; }
+
+    .countdown { display: flex; justify-content: center; align-items: flex-start; gap: 6px; margin-bottom: 28px; width: 100%; }
+    .unit { flex: 1; background: #111827; border: 1px solid #1f2d47; border-radius: 10px; padding: 12px 4px; min-width: 0; }
+    .unit .num { font-size: clamp(26px, 7.5vw, 52px); font-weight: 800; color: #00e5a0; line-height: 1; font-variant-numeric: tabular-nums; display: block; }
+    .unit .lbl { font-size: clamp(8px, 2vw, 11px); color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 5px; display: block; }
+    .divider { display: none; color: #2d3f5f; font-size: clamp(24px, 6vw, 44px); font-weight: 300; padding-top: 10px; flex-shrink: 0; }
+
+    @media (min-width: 480px) {
+      .divider { display: block; }
+      .unit { padding: 16px 10px; }
+    }
+
+    .main-link { font-size: 13px; color: #475569; }
+    .main-link a { color: #64748b; text-decoration: underline; }
+    .main-link a:hover { color: #94a3b8; }
+
+    /* ── Coupon form (shown after 9am) ── */
+    #phase-coupon { width: 100%; max-width: 360px; display: none; }
+
+    .coupon-heading { font-size: clamp(20px, 5vw, 28px); font-weight: 700; margin-bottom: 8px; }
+    .coupon-sub { font-size: 14px; color: #64748b; margin-bottom: 32px; line-height: 1.5; }
+
+    .input-wrap { position: relative; margin-bottom: 12px; }
+    .input-wrap input {
+      width: 100%;
+      background: #111827;
+      border: 1.5px solid #1f2d47;
+      border-radius: 10px;
+      color: #e2e8f0;
+      font-size: 16px;
+      font-family: "Courier New", monospace;
+      letter-spacing: 2px;
+      padding: 14px 16px;
+      text-transform: uppercase;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .input-wrap input::placeholder { letter-spacing: 1px; font-size: 14px; color: #3b4a60; text-transform: none; font-family: inherit; }
+    .input-wrap input:focus { border-color: #00e5a0; }
+    .input-wrap input.error { border-color: #ef4444; }
+
+    .btn-submit {
+      width: 100%;
+      background: #00e5a0;
+      color: #0a0e1a;
+      font-weight: 700;
+      padding: 14px;
+      border-radius: 10px;
+      font-size: 15px;
+      border: none;
+      cursor: pointer;
+      transition: opacity .2s;
+      margin-bottom: 16px;
+    }
+    .btn-submit:hover { opacity: 0.85; }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .msg-error { font-size: 13px; color: #ef4444; margin-bottom: 12px; min-height: 18px; }
+    .msg-success { font-size: 13px; color: #00e5a0; margin-bottom: 12px; min-height: 18px; }
+
+    .coupon-help {
+      font-size: 12px; color: #475569; line-height: 1.6; margin-top: 8px;
+      border-top: 1px solid #1f2d47; padding-top: 16px;
+    }
+    .coupon-help a { color: #64748b; text-decoration: underline; }
+    .coupon-help a:hover { color: #94a3b8; }
+  </style>
+</head>
+<body>
+
+  <div class="logo">Crypto<span>Nova</span></div>
+  <div class="badge">Early Access · Base Chain</div>
+
+  <!-- Phase 1: Before 9am — show countdown -->
+  <div id="phase-countdown">
+    <div class="headline">Early access opens</div>
+    <div class="date">July 19, 2026 &nbsp;·&nbsp; <em>9:00 AM EST</em></div>
+    <div class="countdown">
+      <div class="unit"><span class="num" id="cd-d">--</span><span class="lbl">Days</span></div>
+      <div class="divider">:</div>
+      <div class="unit"><span class="num" id="cd-h">--</span><span class="lbl">Hours</span></div>
+      <div class="divider">:</div>
+      <div class="unit"><span class="num" id="cd-m">--</span><span class="lbl">Min</span></div>
+      <div class="divider">:</div>
+      <div class="unit"><span class="num" id="cd-s">--</span><span class="lbl">Sec</span></div>
+    </div>
+    <p class="main-link">Main site opens at 12:00 PM EST &nbsp;·&nbsp; <a href="https://cryptonova.ai">cryptonova.ai</a></p>
+  </div>
+
+  <!-- Phase 2: After 9am — show coupon form -->
+  <div id="phase-coupon">
+    <div class="coupon-heading">Enter Your Access Code</div>
+    <p class="coupon-sub">Early access is invite-only.<br>Enter the code your leader shared with you.</p>
+    <div class="input-wrap">
+      <input id="code-input" type="text" maxlength="32" placeholder="Enter your access code" autocomplete="off" spellcheck="false"/>
+    </div>
+    <div class="msg-error" id="msg-error"></div>
+    <button class="btn-submit" id="btn-submit">Unlock Early Access</button>
+    <div class="coupon-help">
+      Don't have a code? Join our <a href="https://t.me/CryptoNovaMatrix" target="_blank">Telegram community</a> and connect with a Genesis leader to receive an invitation.
+    </div>
+  </div>
+
+  <script>
+    var EA_OPEN   = new Date('2026-07-19T13:00:00Z'); // 9:00am EDT = 13:00 UTC
+    var MAIN_OPEN = new Date('2026-07-19T16:00:00Z'); // 12:00pm EDT = 16:00 UTC
+    var ACCESS_KEY = 'ea_access_v1';
+
+    // Already have access? Go straight to the site.
+    if (localStorage.getItem(ACCESS_KEY) === '1') {
+      window.location.replace('/');
+    }
+
+    function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+    function showPhase() {
+      var now = Date.now();
+      if (now < EA_OPEN.getTime()) {
+        // Before 9am — show countdown
+        document.getElementById('phase-countdown').style.display = 'block';
+        document.getElementById('phase-coupon').style.display   = 'none';
+      } else {
+        // 9am or later — show coupon form
+        document.getElementById('phase-countdown').style.display = 'none';
+        document.getElementById('phase-coupon').style.display   = 'block';
+        document.getElementById('code-input').focus();
+      }
+    }
+
+    function tick() {
+      var diff = Math.max(0, EA_OPEN - Date.now());
+      if (diff === 0) { showPhase(); return; }
+      var s = Math.floor(diff / 1000);
+      document.getElementById('cd-d').textContent = Math.floor(s / 86400);
+      document.getElementById('cd-h').textContent = pad(Math.floor(s % 86400 / 3600));
+      document.getElementById('cd-m').textContent = pad(Math.floor(s % 3600 / 60));
+      document.getElementById('cd-s').textContent = pad(s % 60);
+    }
+
+    showPhase();
+    tick();
+    setInterval(function() { tick(); showPhase(); }, 1000);
+
+    // ── Coupon submission ──
+    var btn   = document.getElementById('btn-submit');
+    var input = document.getElementById('code-input');
+    var errEl = document.getElementById('msg-error');
+
+    function setError(msg) {
+      errEl.className = 'msg-error';
+      errEl.textContent = msg;
+      input.classList.add('error');
+    }
+    function setSuccess(msg) {
+      errEl.className = 'msg-success';
+      errEl.textContent = msg;
+      input.classList.remove('error');
+    }
+    function clearMsg() {
+      errEl.textContent = '';
+      input.classList.remove('error');
+    }
+
+    input.addEventListener('input', clearMsg);
+
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') btn.click();
+    });
+
+    btn.addEventListener('click', async function() {
+      var code = input.value.trim();
+      if (!code) { setError('Please enter your access code.'); return; }
+
+      btn.disabled = true;
+      btn.textContent = 'Checking…';
+      clearMsg();
+
+      try {
+        var res = await fetch('/api/verify-coupon', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: code }),
+        });
+        var data = await res.json();
+
+        if (data.valid) {
+          localStorage.setItem(ACCESS_KEY, '1');
+          setSuccess('✓ Access granted — loading…');
+          setTimeout(function() { window.location.replace('/'); }, 600);
+        } else {
+          setError('Invalid code. Contact your leader for access.');
+          btn.disabled = false;
+          btn.textContent = 'Unlock Early Access';
+          input.select();
+        }
+      } catch (e) {
+        setError('Connection error — please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Unlock Early Access';
+      }
+    });
+  </script>
+
+</body>
+</html>

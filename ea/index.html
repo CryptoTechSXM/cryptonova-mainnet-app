@@ -4,6 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CryptoNova — Early Access</title>
+
+  <!-- ── Early Access Gate ────────────────────────────────────────────────
+       Before July 19 9am EDT OR no valid coupon in localStorage → coupon.html
+       After gate: coupon.html sets localStorage ea_access_v1='1' and redirects here.
+  ──────────────────────────────────────────────────────────────────────── -->
+  <script>
+  (function () {
+    var EA_OPEN = new Date('2026-07-19T13:00:00Z'); // 9:00am EDT
+    if (Date.now() < EA_OPEN.getTime() || localStorage.getItem('ea_access_v1') !== '1') {
+      window.location.replace('/coupon.html');
+    }
+  })();
+  </script>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.1/ethers.umd.min.js"></script>
   <style>
     :root {
