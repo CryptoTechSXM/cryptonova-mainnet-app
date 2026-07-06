@@ -3746,7 +3746,6 @@ async function loadMyTree() {
     setText('matrix-fill',  n + ' / ' + Number(activeMSize));
     setText('matrix-bfs',   Number(activeMSize) + ' seats');
     setText('matrix-my-node', activeBFS > 0n ? '#'+activeBFS.toString() : '—');
-    document.getElementById('matrix-my-node-label').textContent = 'My Position';
     const banner = document.getElementById('matrix-pos-banner');
     if (banner) {
       banner.style.display='block';
