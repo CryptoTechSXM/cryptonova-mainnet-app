@@ -108,20 +108,12 @@
   <div class="logo">Crypto<span>Nova</span></div>
   <div class="badge">Early Access · Base Chain</div>
 
-  <!-- Phase 1: Before 9am — show countdown -->
+  <!-- Phase 1: Before open — date TBD (countdown removed 2026-07-23, no more moving dates) -->
   <div id="phase-countdown">
     <div class="headline">Early access opens</div>
-    <div class="date">July 26, 2026 &nbsp;·&nbsp; <em>12:00 PM EST</em></div>
-    <div class="countdown">
-      <div class="unit"><span class="num" id="cd-d">--</span><span class="lbl">Days</span></div>
-      <div class="divider">:</div>
-      <div class="unit"><span class="num" id="cd-h">--</span><span class="lbl">Hours</span></div>
-      <div class="divider">:</div>
-      <div class="unit"><span class="num" id="cd-m">--</span><span class="lbl">Min</span></div>
-      <div class="divider">:</div>
-      <div class="unit"><span class="num" id="cd-s">--</span><span class="lbl">Sec</span></div>
-    </div>
-    <p class="main-link">Main site opens at 12:00 PM EST &nbsp;·&nbsp; <a href="https://cryptonova.ai">cryptonova.ai</a></p>
+    <div class="date"><em>To be determined</em> &nbsp;·&nbsp; announced when it's ready</div>
+    <p class="main-link">Official flagship launch: <em>June 19, 2027 · Juneteenth</em> &nbsp;·&nbsp; <a href="https://cryptonova.ai">cryptonova.ai</a></p>
+    <p class="main-link">Try the full experience today on the live testnet &nbsp;·&nbsp; <a href="https://crypto-nova.app">crypto-nova.app</a></p>
   </div>
 
   <!-- Phase 2: After 9am — show coupon form -->
@@ -139,45 +131,29 @@
   </div>
 
   <script>
-    var EA_OPEN   = new Date('2026-07-26T16:00:00Z'); // 9:00am EDT = 13:00 UTC
-    var MAIN_OPEN = new Date('2026-07-26T19:00:00Z'); // 12:00pm EDT = 16:00 UTC
+    // 2026-07-23: soft launch date REMOVED — EA opens only by flipping this flag.
+    var EA_OPEN_FLAG = false;
     var ACCESS_KEY = 'ea_access_v1';
 
-    // Already have access AND past open time? Go straight to the site.
-    // Time check prevents redirect loop before EA_OPEN for users with key already set.
-    if (Date.now() >= EA_OPEN.getTime() && localStorage.getItem(ACCESS_KEY) === '1') {
+    // Already have access AND EA is open? Go straight to the site.
+    if (EA_OPEN_FLAG && localStorage.getItem(ACCESS_KEY) === '1') {
       window.location.replace('/');
     }
 
-    function pad(n) { return n < 10 ? '0' + n : '' + n; }
-
     function showPhase() {
-      var now = Date.now();
-      if (now < EA_OPEN.getTime()) {
-        // Before 9am — show countdown
+      if (!EA_OPEN_FLAG) {
+        // Not open — show the TBD notice
         document.getElementById('phase-countdown').style.display = 'block';
         document.getElementById('phase-coupon').style.display   = 'none';
       } else {
-        // 9am or later — show coupon form
+        // Open — show coupon form
         document.getElementById('phase-countdown').style.display = 'none';
         document.getElementById('phase-coupon').style.display   = 'block';
         document.getElementById('code-input').focus();
       }
     }
 
-    function tick() {
-      var diff = Math.max(0, EA_OPEN - Date.now());
-      if (diff === 0) { showPhase(); return; }
-      var s = Math.floor(diff / 1000);
-      document.getElementById('cd-d').textContent = Math.floor(s / 86400);
-      document.getElementById('cd-h').textContent = pad(Math.floor(s % 86400 / 3600));
-      document.getElementById('cd-m').textContent = pad(Math.floor(s % 3600 / 60));
-      document.getElementById('cd-s').textContent = pad(s % 60);
-    }
-
     showPhase();
-    tick();
-    setInterval(function() { tick(); showPhase(); }, 1000);
 
     // ── Coupon submission ──
     var btn   = document.getElementById('btn-submit');

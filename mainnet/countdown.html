@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>CryptoNova — Launching July 26</title>
+  <title>CryptoNova — Mainnet Coming · Flagship June 19, 2027</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -205,29 +205,7 @@
   <div class="badge">Mainnet · Base Chain</div>
 
   <div class="headline">Soft launch</div>
-  <div class="date">July 26, 2026 &nbsp;·&nbsp; <em>3:00 PM EST</em></div>
-
-  <div class="countdown">
-    <div class="unit">
-      <span class="num" id="cd-d">--</span>
-      <span class="lbl">Days</span>
-    </div>
-    <div class="divider">:</div>
-    <div class="unit">
-      <span class="num" id="cd-h">--</span>
-      <span class="lbl">Hours</span>
-    </div>
-    <div class="divider">:</div>
-    <div class="unit">
-      <span class="num" id="cd-m">--</span>
-      <span class="lbl">Min</span>
-    </div>
-    <div class="divider">:</div>
-    <div class="unit">
-      <span class="num" id="cd-s">--</span>
-      <span class="lbl">Sec</span>
-    </div>
-  </div>
+  <div class="date"><em>To be determined</em> &nbsp;·&nbsp; announced when it's ready</div>
 
   <div class="flagship">
     <span class="flag-label">🎯 Official Launch</span>
@@ -235,31 +213,13 @@
   </div>
 
   <div class="links">
-    <a class="btn-ea" href="https://ea.cryptonova.ai">Early Access &rarr;</a>
+    <a class="btn-ea" href="https://crypto-nova.app">Try the Live Testnet &rarr;</a>
     <a class="btn-tg" href="https://t.me/CryptoNovaMatrix" target="_blank">Join the Community on Telegram</a>
   </div>
 
   <p class="juneteenth">
-    <strong>Two dates. One vision.</strong> Soft launch July 26, 2026 — earn, cycle, and shape the protocol. Official flagship launch June 19, 2027 (Juneteenth) — the whole shebang. Financial freedom isn't a feature. It's the point.
+    <strong>One date. One vision.</strong> The mainnet soft launch opens when testing says it's ready — no rushed dates, no resets with real money. Official flagship launch June 19, 2027 (Juneteenth) — the whole shebang. Financial freedom isn't a feature. It's the point. Meanwhile, the full experience is live on testnet — zero risk, real mechanics.
   </p>
-
-  <script>
-    var LAUNCH = new Date('2026-07-26T19:00:00Z');
-    if (Date.now() >= LAUNCH.getTime()) window.location.replace('/');
-
-    function pad(n) { return n < 10 ? '0' + n : '' + n; }
-    function tick() {
-      var diff = Math.max(0, LAUNCH - Date.now());
-      if (diff === 0) { window.location.replace('/'); return; }
-      var s = Math.floor(diff / 1000);
-      document.getElementById('cd-d').textContent = Math.floor(s / 86400);
-      document.getElementById('cd-h').textContent = pad(Math.floor(s % 86400 / 3600));
-      document.getElementById('cd-m').textContent = pad(Math.floor(s % 3600 / 60));
-      document.getElementById('cd-s').textContent = pad(s % 60);
-    }
-    tick();
-    setInterval(tick, 1000);
-  </script>
 
 </body>
 </html>

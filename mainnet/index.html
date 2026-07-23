@@ -12,9 +12,12 @@
   ──────────────────────────────────────────────────────────────────────────── -->
   <script>
   (function () {
-    var LAUNCH = new Date('2026-07-26T19:00:00Z'); // 12:00pm EDT
-    if (Date.now() >= LAUNCH.getTime()) return;    // past launch — load normally
-    window.location.replace('/countdown.html');    // before launch — show countdown
+    // 2026-07-23: soft launch date REMOVED (owner decision — no more moving dates).
+    // Gate is now UNCONDITIONAL: mainnet opens only by editing this block, never by
+    // a clock. To open: set MAINNET_OPEN = true and push.
+    var MAINNET_OPEN = false;
+    if (MAINNET_OPEN) return;                      // opened deliberately — load normally
+    window.location.replace('/countdown.html');    // otherwise — show the TBD page
   })();
   </script>
 
