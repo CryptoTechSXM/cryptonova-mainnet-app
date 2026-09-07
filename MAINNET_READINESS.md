@@ -116,9 +116,16 @@ before the no-manual-top-up policy — both templates are re-cut when the runboo
       the three-key layout. Rows go into `MAINNET_DEPLOY_RUNBOOK.md` (§4).
       Owner's follow-up questions 2026-09-07, answered from the code: (a) Safe signers + threshold
       are changeable later by multisig approval — the contracts only ever see the Safe's address.
-      (b) MEASURED which recipient wallets can move after deploy: setters exist (owner-only) for
-      stabilityFund, buybackReserve, liquidityReserve, communityWallet, accountOne
-      (`FigureEightMatrixV8.sol:266-310`, `StabilityFund.sol:328/400`, `TierRouter.sol:504/581`);
+      (b) MEASURED which recipients can move after deploy — CORRECTED after the owner asked
+      "I thought Community, Stability and Buyback were contract based?" (they are: the V8.52 book
+      rows are the CommunityWallet / StabilityFund / CNOVABuybackReserve CONTRACTS; only
+      liquidityReserve and accountOne are wallets). Each matrix holds a re-pointable address for
+      all five (`FigureEightMatrixV8.sol:266-310`, read by the split code `self.liquidityReserve`
+      :1189 / `self.buybackReserve` :1243 / `self.stabilityFund` :628) — so: liquidityReserve + W1
+      can be moved to a hardware WALLET later (one owner tx per matrix; payout-to-new-address
+      still to be proven by test); SF / BBR / CommunityWallet are stateful CONTRACTS — re-pointing
+      is a migration (ledger + balances do not follow), their setters are deploy wiring / repair,
+      and they are secured by OWNING them with the hardware wallet (P3), not by moving them.
       NO setter for **devWallet, opsWallet, treasury** inside the 20 live matrices — fixed by
       `DeployParams` at birth, paid by `MatrixLogicLib.sol:1190-1205` for the life of the deploy
       (`MatrixPairFactory.setWallets` :177 only affects matrices created afterwards). Owner intends
