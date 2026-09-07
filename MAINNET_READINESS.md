@@ -80,11 +80,26 @@ before the no-manual-top-up policy — both templates are re-cut when the runboo
       gates only (`tierGateThreshold[5..10]`, whale gate). MEASURED for the record: there is no
       on-chain max-open-tier or deposit cap, so the "T1-only" and "deploy only T1–T3 PMs" options
       were code changes, not switches — both dropped, no fork test owed.
-- [ ] **P2 Pause plan.** `TierRouter.pauseSystem(reason)` / `unpauseSystem()` are `onlyOwner`
-      (`:720/:730`) and gate register/upgrade paths (`whenNotPaused`). Decide: who can call it (the
-      deployer key today), from where (PC? box?), the trigger list (SF insolvency floor, keeper
-      silent > N h, Blockaid re-flag, exploit report), and the member notice template. Withdrawals
-      are NOT under `whenNotPaused` — confirm by test that a paused system still lets members out.
+- [x] **P2 Pause plan — DECIDED 2026-09-07 (owner: "I will go with you on that as well, automate it").**
+      MEASURED first (TierRouter.sol): `systemPaused` (:354) blocks register ×4 + manualUpgrade /
+      hybridUpgrade / bulkUpgrade via `whenNotPaused`; withdrawals (`bulkWithdraw` :1063/:1086,
+      matrix `withdraw*`) are NOT gated — members can always exit (code read; hardhat test still
+      owed before members are told). The only automatic pause today is `checkInactivity()` (:684):
+      no registration for N days / N cycles → self-pause. `pauseSystem` is `onlyOwner` (:720), so
+      an automatic watchdog would need the owner key on the VPS — rejected (P3).
+      DECISION: (1) **new limited `pauser` role in TierRouter before mainnet** — one address that
+      may call pause ONLY (never unpause, never any setter); a VPS watchdog keeper holding that key
+      pauses automatically when StabilityFund `totalBalance < stabilityFloor`; worst case if that
+      key leaks = the front door closes until the owner unpauses. Build = ~10 lines + a test;
+      ⚠ FIRST MEASUREMENT: TierRouter was 142 bytes under EIP-170 at V8.47 — measure the current
+      margin before writing a line; if it does not fit, the role goes into TierRouterLib or a
+      2-line `pauser` check replaces a revert string. (2) Human triggers, owner's refinements:
+      Blockaid re-flag → pause, investigate, UNPAUSE while dealing with Blockaid if the code is
+      clean; silent keeper → ALERT first (Telegram silent-job alert exists), pause only if still
+      silent after a look — usually a VPS outage; credible exploit report → pause, always.
+      (3) Ready-to-paste pause + unpause commands on the PC, rehearsed on Sepolia; member notice
+      template in the owner's voice ("new registrations paused while we check; withdrawals work
+      as normal"); unpause only after the cause is written down. Lives in the incident page (P4).
 - [ ] **P3 Key custody.** Today: one deployer key, on the PC `.env` AND on the VPS `/root/keeper`
       (keepers spend from it). `TierRouter.setGovernance` exists (`:464`, `onlyOwnerOrGovernance`
       setters). Options: (a) Safe multisig (2-of-3: owner + two co-op members) as `owner`, deployer
@@ -183,7 +198,7 @@ keeper start order, and the owner human test with a $10 real registration + with
 
 1. Blockaid nudge from 09-08 morning local (G1). Re-test after any reply.
 2. ~~T1, T1b, T2-contracts, T4, T5 all proven live (09-07).~~
-3. P2 pause plan + P3 key custody options → owner picks (policy); P4 incident page.
+3. ~~P2 decided (automated pauser role).~~ P3 key custody → owner picks; then build the pauser role (measure TierRouter size first) + P4 incident page.
 4. G4 disclosure line + G5 bounty text — drafted in the owner's voice, owner sets the amounts.
 5. G2 measurement window: agree start block (V8.52 first organic registration) and run it.
 6. `MAINNET_DEPLOY_RUNBOOK.md` (§4) once T1/T2/T4 are landed.
