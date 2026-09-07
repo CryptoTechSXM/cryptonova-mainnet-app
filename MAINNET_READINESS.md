@@ -140,7 +140,8 @@ before the no-manual-top-up policy — both templates are re-cut when the runboo
       frontend repoint tool (`update_addrs` in the app repo) — both are new/edited anyway.
 - [ ] **T3 Grace period default** — already fails safe: unknown network → 48h mainnet policy
       (`deploy_v8.js:947-951`). Tick after one dry run prints `172800` for `baseMainnet`.
-- [ ] **T4 Verify-before-repoint as a script gate — BUILT 2026-09-07, live run owed.**
+- [x] **T4 Verify-before-repoint as a script gate — DONE 2026-09-07 (live: V8.52 book, 46 VERIFIED, 1 wallet,
+      0 unverified, 0 unknown, `verify_gate exit 0 (OPEN)`; pushed `30532f2`).**
       `scripts/verify_gate.js` (contracts repo; was `check_verification_v850.js`, session 45):
       read-only, chain + explorer taken from the book's `chainId`, one `getsourcecode` per address
       with `eth_getCode` to tell wallets from unverified contracts, EXIT 0 only when every contract
@@ -181,7 +182,7 @@ keeper start order, and the owner human test with a $10 real registration + with
 ## 5. NEXT ACTIONS, IN ORDER
 
 1. Blockaid nudge from 09-08 morning local (G1). Re-test after any reply.
-2. ~~T1, T1b, T2-contracts, T5 proven live; T4 built (09-07).~~ OWED: one live `verify_gate.js` run on V8.52.
+2. ~~T1, T1b, T2-contracts, T4, T5 all proven live (09-07).~~
 3. P2 pause plan + P3 key custody options → owner picks (policy); P4 incident page.
 4. G4 disclosure line + G5 bounty text — drafted in the owner's voice, owner sets the amounts.
 5. G2 measurement window: agree start block (V8.52 first organic registration) and run it.
