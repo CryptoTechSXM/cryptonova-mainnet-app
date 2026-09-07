@@ -140,10 +140,16 @@ before the no-manual-top-up policy — both templates are re-cut when the runboo
       frontend repoint tool (`update_addrs` in the app repo) — both are new/edited anyway.
 - [ ] **T3 Grace period default** — already fails safe: unknown network → 48h mainnet policy
       (`deploy_v8.js:947-951`). Tick after one dry run prints `172800` for `baseMainnet`.
-- [ ] **T4 Verify-before-repoint as a script gate.** `verify_all_v850.js` exists; make a
-      `verify_all.js` that reads the addresses file, verifies every contract, and EXITS NON-ZERO
-      if any is unverified — and put it in `postdeploy_check.js` so the frontend repoint step
-      cannot start on an unverified set (the rule that ended the Blockaid flags).
+- [ ] **T4 Verify-before-repoint as a script gate — BUILT 2026-09-07, live run owed.**
+      `scripts/verify_gate.js` (contracts repo; was `check_verification_v850.js`, session 45):
+      read-only, chain + explorer taken from the book's `chainId`, one `getsourcecode` per address
+      with `eth_getCode` to tell wallets from unverified contracts, EXIT 0 only when every contract
+      row is VERIFIED, 1 on any UNVERIFIED or UNKNOWN (a read failure is not a pass), 2 on setup.
+      Verdict function proven 4/4 offline. `scripts/verify_all.js` (was `_v850`) is the SUBMITTER,
+      book required, chain-guarded against `--network`. `postdeploy_check.js` step 4 runs the gate
+      and fails its verdict on non-zero, so "Safe to cut over" cannot print on an unverified set.
+      Tick after: `$env:ADDRESSES_FILE="deployed_addresses_v8_52.json"; node scripts/verify_gate.js`
+      on the PC → expect 46 VERIFIED, wallets listed, `verify_gate exit 0 (OPEN)`.
 - [x] **T5 `postdeploy_check.js` reads `upkeepCaller`** — DONE 2026-09-07: live run on V8.52 block
       46525181 printed `PASS upkeepCaller[keeper EOA] granted` (plus stabilityFloor, graduationEnabled).
 - [ ] **T6 Faucet must not exist on mainnet.** `api/faucet.js` holds a funded key on the testnet
@@ -175,7 +181,7 @@ keeper start order, and the owner human test with a $10 real registration + with
 ## 5. NEXT ACTIONS, IN ORDER
 
 1. Blockaid nudge from 09-08 morning local (G1). Re-test after any reply.
-2. ~~T1, T1b, T2-contracts, T5 all proven live (09-07).~~ NOW: T4 `verify_all.js` with the guard.
+2. ~~T1, T1b, T2-contracts, T5 proven live; T4 built (09-07).~~ OWED: one live `verify_gate.js` run on V8.52.
 3. P2 pause plan + P3 key custody options → owner picks (policy); P4 incident page.
 4. G4 disclosure line + G5 bounty text — drafted in the owner's voice, owner sets the amounts.
 5. G2 measurement window: agree start block (V8.52 first organic registration) and run it.
