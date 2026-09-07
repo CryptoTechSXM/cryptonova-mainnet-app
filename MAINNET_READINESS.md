@@ -100,12 +100,20 @@ before the no-manual-top-up policy — both templates are re-cut when the runboo
       (3) Ready-to-paste pause + unpause commands on the PC, rehearsed on Sepolia; member notice
       template in the owner's voice ("new registrations paused while we check; withdrawals work
       as normal"); unpause only after the cause is written down. Lives in the incident page (P4).
-- [ ] **P3 Key custody.** Today: one deployer key, on the PC `.env` AND on the VPS `/root/keeper`
-      (keepers spend from it). `TierRouter.setGovernance` exists (`:464`, `onlyOwnerOrGovernance`
-      setters). Options: (a) Safe multisig (2-of-3: owner + two co-op members) as `owner`, deployer
-      key demoted to keeper-only; (b) owner-only hardware wallet as owner, hot key for keepers;
-      (c) status quo (single hot key = single point of theft) — NOT recommended for real funds.
-      Whatever is picked, the keeper key must not be the owner key on mainnet.
+- [x] **P3 Key custody — DECIDED 2026-09-07 (owner: "B now and A later").**
+      Today: ONE hot key = deployer = owner = keeper, in `.env` on the PC AND in `/root/keeper` on
+      the VPS — one file, whole system. DECISION: **(B) hardware wallet as `owner`** of every
+      contract before mainnet (Ledger/Trezor, ~$80–150; the owner key never exists as a file);
+      keepers get their OWN hot key that can only do keeper jobs (`upkeepCaller` grant), and the
+      P2 pauser gets its own pause-only key; deployer may stay a hot key used once at deploy and
+      then demoted by `transferOwnership` to the hardware address. **(A) later:** once owner
+      actions have been seen to be rare in live operation, hand ownership to a 2-of-3 Safe
+      (owner + two CryptoCounsel members). NON-NEGOTIABLE either way: keeper key ≠ pauser key ≠
+      owner key on mainnet. Build items this creates (Claude): a `transfer_ownership.js` that
+      walks every Ownable contract in the book (46 rows — measure which are Ownable first) and
+      hands them to the hardware address, with a read-back check; a Sepolia rehearsal of pause +
+      unpause + one setter signed from the hardware wallet; `mainnet_wallet_setup.md` re-cut with
+      the three-key layout. Rows go into `MAINNET_DEPLOY_RUNBOOK.md` (§4).
 - [ ] **P4 Incident playbook** — one page: detect (Telegram alerts already live: balance,
       frozen-pair, silent-job, RPC, site/faucet probes), decide (who), act (pause tx block ready
       to paste), tell (member post template in the owner's voice), review. Lives in
@@ -198,7 +206,7 @@ keeper start order, and the owner human test with a $10 real registration + with
 
 1. Blockaid nudge from 09-08 morning local (G1). Re-test after any reply.
 2. ~~T1, T1b, T2-contracts, T4, T5 all proven live (09-07).~~
-3. ~~P2 decided (automated pauser role).~~ P3 key custody → owner picks; then build the pauser role (measure TierRouter size first) + P4 incident page.
+3. ~~P2 + P3 decided (automated pauser role; hardware-wallet owner now, Safe later).~~ Build: pauser role (measure TierRouter size first), ownership-transfer script (census of Ownable contracts first), P4 incident page.
 4. G4 disclosure line + G5 bounty text — drafted in the owner's voice, owner sets the amounts.
 5. G2 measurement window: agree start block (V8.52 first organic registration) and run it.
 6. `MAINNET_DEPLOY_RUNBOOK.md` (§4) once T1/T2/T4 are landed.
