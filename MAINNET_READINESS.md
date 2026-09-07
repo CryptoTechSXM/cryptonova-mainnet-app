@@ -91,9 +91,11 @@ before the no-manual-top-up policy — both templates are re-cut when the runboo
       may call pause ONLY (never unpause, never any setter); a VPS watchdog keeper holding that key
       pauses automatically when StabilityFund `totalBalance < stabilityFloor`; worst case if that
       key leaks = the front door closes until the owner unpauses. Build = ~10 lines + a test;
-      ⚠ FIRST MEASUREMENT: TierRouter was 142 bytes under EIP-170 at V8.47 — measure the current
-      margin before writing a line; if it does not fit, the role goes into TierRouterLib or a
-      2-line `pauser` check replaces a revert string. (2) Human triggers, owner's refinements:
+      ✅ BUILT + PROVEN 2026-09-07 (contracts `f8cd4b3`, V8.53): `pauser` + `setPauser` +
+      owner-or-pauser `pauseSystem`; 6/6 new tests + Elevator suite green (146 passing).
+      MEASURED: 24,345 → 24,509 bytes, 67 under EIP-170 — TierRouter is at its ceiling (R15).
+      STILL OWED: `postdeploy_check.js` pauser row; the VPS watchdog keeper (T9 env first);
+      withdrawals-while-paused test. (2) Human triggers, owner's refinements:
       Blockaid re-flag → pause, investigate, UNPAUSE while dealing with Blockaid if the code is
       clean; silent keeper → ALERT first (Telegram silent-job alert exists), pause only if still
       silent after a look — usually a VPS outage; credible exploit report → pause, always.
@@ -224,7 +226,7 @@ keeper start order, and the owner human test with a $10 real registration + with
 
 1. Blockaid nudge from 09-08 morning local (G1). Re-test after any reply.
 2. ~~T1, T1b, T2-contracts, T4, T5 all proven live (09-07).~~
-3. ~~P2 + P3 decided (automated pauser role; hardware-wallet owner now, Safe later).~~ Build: pauser role (measure TierRouter size first), ownership-transfer script (census of Ownable contracts first), P4 incident page.
+3. ~~P2 + P3 decided (automated pauser role; hardware-wallet owner now, Safe later).~~ ~~pauser role built.~~ Build: postdeploy_check pauser row → watchdog keeper (needs T9 env) → withdraw-while-paused test → ownership-transfer script (Ownable2Step; census first) → P4 incident page.
 4. G4 disclosure line + G5 bounty text — drafted in the owner's voice, owner sets the amounts.
 5. G2 measurement window: agree start block (V8.52 first organic registration) and run it.
 6. `MAINNET_DEPLOY_RUNBOOK.md` (§4) once T1/T2/T4 are landed.
