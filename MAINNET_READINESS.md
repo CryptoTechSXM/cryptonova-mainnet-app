@@ -114,6 +114,17 @@ before the no-manual-top-up policy — both templates are re-cut when the runboo
       hands them to the hardware address, with a read-back check; a Sepolia rehearsal of pause +
       unpause + one setter signed from the hardware wallet; `mainnet_wallet_setup.md` re-cut with
       the three-key layout. Rows go into `MAINNET_DEPLOY_RUNBOOK.md` (§4).
+      Owner's follow-up questions 2026-09-07, answered from the code: (a) Safe signers + threshold
+      are changeable later by multisig approval — the contracts only ever see the Safe's address.
+      (b) MEASURED which recipient wallets can move after deploy: setters exist (owner-only) for
+      stabilityFund, buybackReserve, liquidityReserve, communityWallet, accountOne
+      (`FigureEightMatrixV8.sol:266-310`, `StabilityFund.sol:328/400`, `TierRouter.sol:504/581`);
+      NO setter for **devWallet, opsWallet, treasury** inside the 20 live matrices — fixed by
+      `DeployParams` at birth, paid by `MatrixLogicLib.sol:1190-1205` for the life of the deploy
+      (`MatrixPairFactory.setWallets` :177 only affects matrices created afterwards). Owner intends
+      these to be hardware wallets. DECISION (Claude's recommendation, owner to confirm at the
+      wallet-setup step): no new setters; Dev / Ops / Treasury-recipient addresses are hardware
+      addresses that EXIST BEFORE deploy day and go into `env.mainnet.deploy.template`.
 - [ ] **P4 Incident playbook** — one page: detect (Telegram alerts already live: balance,
       frozen-pair, silent-job, RPC, site/faucet probes), decide (who), act (pause tx block ready
       to paste), tell (member post template in the owner's voice), review. Lives in
