@@ -116,8 +116,8 @@ before the no-manual-top-up policy — both templates are re-cut when the runboo
       46 contracts to nothing); on hardhat/localhost = notice + MockUSDC deploy. Also fixed on the
       way: `EXPECTED_DEPLOYER` guard skipped on local networks; MockUSDC constructor arg (`admin`)
       restored in the deploy branch, which had not run since the shared Sepolia token took over.
-- [ ] **T2 Network guard — MEASURED 2026-09-07 (session 66), contracts side BUILT, keeper side
-      folded into T9.** Census: contracts repo `scripts/` 223 of 353 scripts read an addresses
+- [x] **T2 Network guard — contracts side DONE 2026-09-07 (live run PASSED: `postdeploy_check.js` on V8.52,
+      block 46525181, no `chain_guard:` line — book chainId 84532 matched the RPC); keeper side folded into T9.** Census: contracts repo `scripts/` 223 of 353 scripts read an addresses
       book, ONE real guard (`deploy_v8.js` T1b getCode), `keeper_w1.js` only detects testnet vs
       mainnet; the book itself carried only `"network": "baseSepolia"`, no chainId; no shared
       loader (each script opens the file itself, 15 different spellings) — so a per-script fix is
@@ -144,9 +144,8 @@ before the no-manual-top-up policy — both templates are re-cut when the runboo
       `verify_all.js` that reads the addresses file, verifies every contract, and EXITS NON-ZERO
       if any is unverified — and put it in `postdeploy_check.js` so the frontend repoint step
       cannot start on an unverified set (the rule that ended the Blockaid flags).
-- [ ] **T5 `postdeploy_check.js` must read `upkeepCaller`** (R14, 62.23) — CODE CONFIRMED
-      2026-09-07: it does (`MK.upkeepCaller(KEEPER_EOA)`, `:48`). Tick after the one live run
-      against V8.52 that T2 also needs.
+- [x] **T5 `postdeploy_check.js` reads `upkeepCaller`** — DONE 2026-09-07: live run on V8.52 block
+      46525181 printed `PASS upkeepCaller[keeper EOA] granted` (plus stabilityFloor, graduationEnabled).
 - [ ] **T6 Faucet must not exist on mainnet.** `api/faucet.js` holds a funded key on the testnet
       app; the mainnet Vercel project must have NO faucet env/key and the site's faucet UI must be
       hidden by chain. `site_probe.js` expects `/api/faucet` → 400; on mainnet expect 404.
@@ -176,9 +175,7 @@ keeper start order, and the owner human test with a $10 real registration + with
 ## 5. NEXT ACTIONS, IN ORDER
 
 1. Blockaid nudge from 09-08 morning local (G1). Re-test after any reply.
-2. ~~T1 proven, T2 census done + contracts guard built (09-07).~~ OWED: one live
-   `ADDRESSES_FILE=deployed_addresses_v8_52.json node scripts/postdeploy_check.js` from the PC
-   (ticks T2-contracts + T5), then T4 `verify_all.js` with the guard.
+2. ~~T1, T1b, T2-contracts, T5 all proven live (09-07).~~ NOW: T4 `verify_all.js` with the guard.
 3. P2 pause plan + P3 key custody options → owner picks (policy); P4 incident page.
 4. G4 disclosure line + G5 bounty text — drafted in the owner's voice, owner sets the amounts.
 5. G2 measurement window: agree start block (V8.52 first organic registration) and run it.
