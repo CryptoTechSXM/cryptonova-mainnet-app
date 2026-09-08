@@ -104,7 +104,8 @@ before the no-manual-top-up policy — both templates are re-cut when the runboo
       (`harness/watchdog_offline.js`). ⚠ UNRUN: the live pause tx (needs a V8.53 chain — Sepolia
       private deploy first). Test `test/V8_53_WithdrawWhilePaused.test.js` (contracts `c63f194`,
       6 cases: register shut, bulkWithdraw full/partial, matrix withdraw/withdrawPartial/withdrawTo
-      pay, owner-only unpause) — result recorded below when the owner runs it.
+      pay, owner-only unpause) — ✅ OWNER RAN IT 2026-09-08: 18 passing (6 WP + 6 pauser + the 6 BP
+      fixture cases). The "withdrawals work while paused" line may now be said to members.
       (2) Human triggers, owner's refinements:
       Blockaid re-flag → pause, investigate, UNPAUSE while dealing with Blockaid if the code is
       clean; silent keeper → ALERT first (Telegram silent-job alert exists), pause only if still
@@ -121,11 +122,25 @@ before the no-manual-top-up policy — both templates are re-cut when the runboo
       then demoted by `transferOwnership` to the hardware address. **(A) later:** once owner
       actions have been seen to be rare in live operation, hand ownership to a 2-of-3 Safe
       (owner + two CryptoCounsel members). NON-NEGOTIABLE either way: keeper key ≠ pauser key ≠
-      owner key on mainnet. Build items this creates (Claude): a `transfer_ownership.js` that
-      walks every Ownable contract in the book (46 rows — measure which are Ownable first) and
-      hands them to the hardware address, with a read-back check; a Sepolia rehearsal of pause +
-      unpause + one setter signed from the hardware wallet; `mainnet_wallet_setup.md` re-cut with
-      the three-key layout. Rows go into `MAINNET_DEPLOY_RUNBOOK.md` (§4).
+      owner key on mainnet. Build items this creates (Claude): ✅ 2026-09-08 `scripts/transfer_ownership.js`
+      (contracts `3a790be`..`6c3a71b`): CENSUS of the 46 book rows = 37 Ownable2Step (treasury, SF,
+      BBR, router, communityWallet, directSale, couponRegistry, 10 PMs, 20 matrices), 3 Ownable
+      1-step (matrixKeeper, v8Governance, pairFactory), 2 AccessControl admins (cnova
+      DEFAULT_ADMIN_ROLE; communityWallet DEFAULT_ADMIN + GOVERNOR), no owner on matrixFactory /
+      libraries / wallets / external USDC. Modes `--census` / `--propose NEW` / `--verify NEW` /
+      `--renounce-roles OLD`, every row probed on chain (a table/probe disagreement = FAIL), idempotent;
+      `scripts/accept_ownership.js` = the NEW owner's side (37 `acceptOwnership`). ✅ REHEARSED
+      in-process by the owner 2026-09-08: `test/V8_53_OwnershipTransfer.test.js` 11 passing (census →
+      propose → verify red → accept → verify green → old key powerless, cannot pause/setPauser → roles
+      renounced only from the new admin). ⛔ R16 (`deploy_v8.js`): `ADMIN_WALLET_ADDRESS` ≠ deployer is
+      now REFUSED up front — the deploy wires ~40 contracts with onlyOwner setters signed by the
+      deployer, so the old template's "or a Gnosis Safe address" would have died mid-deploy. Ownership
+      moves AFTER deploy. STILL OWED: the mainnet ACCEPT mechanics — 37 signatures from the Trezor;
+      recommended = a small `admin/accept_ownership.html` page (connect Trezor via MetaMask, walks the
+      book, one confirm per contract), rehearsed on the V8.53 Sepolia private deploy with a hot key
+      first; a Sepolia rehearsal of pause + unpause + one setter signed from the hardware wallet;
+      `mainnet_wallet_setup.md` re-cut with the three-key layout; `env.mainnet.deploy.template`
+      loses the Safe hint. Rows go into `MAINNET_DEPLOY_RUNBOOK.md` (§4).
       Owner's follow-up questions 2026-09-07, answered from the code: (a) Safe signers + threshold
       are changeable later by multisig approval — the contracts only ever see the Safe's address.
       (b) MEASURED which recipients can move after deploy — CORRECTED after the owner asked
@@ -257,7 +272,7 @@ keeper start order, and the owner human test with a $10 real registration + with
 
 1. Blockaid nudge from 09-08 morning local (G1). Re-test after any reply.
 2. ~~T1, T1b, T2-contracts, T4, T5 all proven live (09-07).~~
-3. ~~P2 + P3 decided (automated pauser role; hardware-wallet owner now, Safe later).~~ ~~pauser role built.~~ ~~postdeploy_check pauser row~~ ~~watchdog keeper + keeper_env (T9)~~ (09-08). Owner runs `V8_53_WithdrawWhilePaused` → ownership-transfer script (Ownable2Step; census first) → wire the 11 live keepers to `keeper_env.js` → owner's T2-open decision (T9) → P4 incident page.
+3. ~~P2 + P3 decided (automated pauser role; hardware-wallet owner now, Safe later).~~ ~~pauser role built.~~ ~~postdeploy_check pauser row~~ ~~watchdog keeper + keeper_env (T9)~~ (09-08). ~~withdraw-while-paused test (18 passing)~~ ~~ownership-transfer + accept scripts, rehearsed (11 passing)~~ (09-08). Next: V8.53 Sepolia PRIVATE deploy (`deployed_addresses_v8_53_private`) to run the watchdog's live pause tx + set_pauser + postdeploy_check pauser row for real → `accept_ownership.html` admin page → wire the 11 live keepers to `keeper_env.js` → owner's T2-open decision (T9) → P4 incident page.
 4. G4 disclosure line + G5 bounty text — drafted in the owner's voice, owner sets the amounts.
 5. G2 measurement window: agree start block (V8.52 first organic registration) and run it.
 6. `MAINNET_DEPLOY_RUNBOOK.md` (§4) once T1/T2/T4 are landed.
