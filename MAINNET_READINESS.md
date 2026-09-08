@@ -94,8 +94,18 @@ before the no-manual-top-up policy — both templates are re-cut when the runboo
       ✅ BUILT + PROVEN 2026-09-07 (contracts `f8cd4b3`, V8.53): `pauser` + `setPauser` +
       owner-or-pauser `pauseSystem`; 6/6 new tests + Elevator suite green (146 passing).
       MEASURED: 24,345 → 24,509 bytes, 67 under EIP-170 — TierRouter is at its ceiling (R15).
-      STILL OWED: `postdeploy_check.js` pauser row; the VPS watchdog keeper (T9 env first);
-      withdrawals-while-paused test. (2) Human triggers, owner's refinements:
+      ✅ 2026-09-08 (session 67): `postdeploy_check.js` pauser row (contracts `abe4ce9`: `n/a` on a
+      pre-V8.53 router, FAIL on chainId 8453 unless `pauser == PAUSER_WALLET`; 8/8 branches proven
+      with `scripts/harness/postdeploy_offline.js`) + `scripts/set_pauser.js` (owner-only setter,
+      refuses the owner/keeper addresses, bounded read-back). ✅ VPS watchdog BUILT: keepers
+      `b61c6a6` `sf_floor_watchdog.js` on `keeper_env.js` (T9) — SF `totalBalance < stabilityFloor`
+      → `pauseSystem` from `PAUSER_PRIVATE_KEY`; never unpauses; REFUSES if the on-chain pauser is
+      not its key; Telegram + alert_log on state change; 7/7 branches proven offline
+      (`harness/watchdog_offline.js`). ⚠ UNRUN: the live pause tx (needs a V8.53 chain — Sepolia
+      private deploy first). Test `test/V8_53_WithdrawWhilePaused.test.js` (contracts `c63f194`,
+      6 cases: register shut, bulkWithdraw full/partial, matrix withdraw/withdrawPartial/withdrawTo
+      pay, owner-only unpause) — result recorded below when the owner runs it.
+      (2) Human triggers, owner's refinements:
       Blockaid re-flag → pause, investigate, UNPAUSE while dealing with Blockaid if the code is
       clean; silent keeper → ALERT first (Telegram silent-job alert exists), pause only if still
       silent after a look — usually a VPS outage; credible exploit report → pause, always.
@@ -206,7 +216,28 @@ before the no-manual-top-up policy — both templates are re-cut when the runboo
       tracks branch `mainnet` = the 23-file June-19 marketing tree. Anything from `v8.1` merged
       into `mainnet` publishes the handoff to the world. The mainnet app needs its OWN project +
       domain plan written BEFORE any push; do not reuse that project casually.
-- [ ] **T9 Keepers (absorbs T2's keeper half).** MEASURED: 64/105 scripts hard-code chainId 84532 with `staticNetwork:true`, `rpcProvider.js` fallbacks are Sepolia-only, all 12 live-crontab scripts are Sepolia-bound. Fix shape when the time comes: one `keeper_env.js` (RPC + chainId + book from `.env`, `assertChain` on start) required by the 12 live scripts; the other ~50 stay Sepolia-only and are never installed on the mainnet box. The box's crontab/`.env` point at `deployed_addresses_v8_52.json` on
+- [~] **T9 Keepers (absorbs T2's keeper half).** ✅ 2026-09-08 `keeper_env.js` BUILT (keepers
+      `b61c6a6`): chain = the book's `chainId` (a book without one is accepted only as 84532 and
+      says so), `RPC_URL` (falls back to `BASE_SEPOLIA_RPC_URL`), optional `CHAIN_ID` cross-check,
+      `assertChain()` vs `eth_chainId` on start, shared `sendTelegram` + alert_log; proven offline
+      (RPC/book mismatch and env/book conflict both refuse). First consumer: `sf_floor_watchdog.js`.
+      STILL OWED: wire the 11 live-crontab scripts to it (each keeps its own `.env` reads today).
+      ⛔ MEASURED 2026-09-08 — WHICH LIVE JOBS NEED THE OWNER KEY ON MAINNET (they sign with
+      `DEPLOYER_PRIVATE_KEY` today; on Sepolia deployer = owner = keeper so it never showed):
+      live crontab today = channel_pulse, copay_rescue, direct_keeper, dupe_watch, fastlane_rescue,
+      growth_snapshot, integrity_check, onramp_keeper, rr_keeper, sf_invariant_check,
+      system_keeper (`unwedge` + `manual_rescue` TRIMMED since 08-06; rr_keeper/pool_primer/
+      route_rr = testnet fill harness, never on mainnet). Of those, the only OWNER-ONLY call is
+      `system_keeper` T2_AUTO_GATE → `TierRouter.setTierVelocityGreen` (:605: owner OR the
+      `matrixKeeper` address, which deploy sets to the MatrixKeeper CONTRACT, :773). Everything
+      else the rescue jobs call is permissionless (`coPayRescue`) or keeper-granted
+      (`performUpkeep` via `upkeepCaller`). `SF_AUTOFUND` → `receiveLayer` is matrix/router-only
+      anyway and is dead under the no-manual-top-up policy. ▶ MAINNET .env: NO
+      `DEPLOYER_PRIVATE_KEY` on the box; `T2_AUTO_GATE=false`, `SF_AUTOFUND=false`; the keeper key
+      gets the `upkeepCaller` grant. OWNER DECISION owed (economic): T2 opens either by the
+      MatrixKeeper's own rule (80% T1 MatB fill, `MatrixKeeper.sol:1220`) or by ONE
+      `setTierVelocityGreen(1,true)` from the hardware wallet on launch day (recommended — same
+      effect as today's early open, one Trezor tap). Original measurement: 64/105 scripts hard-code chainId 84532 with `staticNetwork:true`, `rpcProvider.js` fallbacks are Sepolia-only, all 12 live-crontab scripts are Sepolia-bound. Fix shape when the time comes: one `keeper_env.js` (RPC + chainId + book from `.env`, `assertChain` on start) required by the 12 live scripts; the other ~50 stay Sepolia-only and are never installed on the mainnet box. The box's crontab/`.env` point at `deployed_addresses_v8_52.json` on
       Sepolia. Mainnet keepers = a separate box or a separate user + `.env` + addresses file, with
       their own key (P3), their own Telegram source tags, and job A (stress fill) NEVER installed.
 - [ ] **T10 Gas ceiling.** The measured Sepolia per-tx cap is 2^24 (memory
@@ -226,7 +257,7 @@ keeper start order, and the owner human test with a $10 real registration + with
 
 1. Blockaid nudge from 09-08 morning local (G1). Re-test after any reply.
 2. ~~T1, T1b, T2-contracts, T4, T5 all proven live (09-07).~~
-3. ~~P2 + P3 decided (automated pauser role; hardware-wallet owner now, Safe later).~~ ~~pauser role built.~~ Build: postdeploy_check pauser row → watchdog keeper (needs T9 env) → withdraw-while-paused test → ownership-transfer script (Ownable2Step; census first) → P4 incident page.
+3. ~~P2 + P3 decided (automated pauser role; hardware-wallet owner now, Safe later).~~ ~~pauser role built.~~ ~~postdeploy_check pauser row~~ ~~watchdog keeper + keeper_env (T9)~~ (09-08). Owner runs `V8_53_WithdrawWhilePaused` → ownership-transfer script (Ownable2Step; census first) → wire the 11 live keepers to `keeper_env.js` → owner's T2-open decision (T9) → P4 incident page.
 4. G4 disclosure line + G5 bounty text — drafted in the owner's voice, owner sets the amounts.
 5. G2 measurement window: agree start block (V8.52 first organic registration) and run it.
 6. `MAINNET_DEPLOY_RUNBOOK.md` (§4) once T1/T2/T4 are landed.
