@@ -106,6 +106,15 @@ before the no-manual-top-up policy — both templates are re-cut when the runboo
       6 cases: register shut, bulkWithdraw full/partial, matrix withdraw/withdrawPartial/withdrawTo
       pay, owner-only unpause) — ✅ OWNER RAN IT 2026-09-08: 18 passing (6 WP + 6 pauser + the 6 BP
       fixture cases). The "withdrawals work while paused" line may now be said to members.
+      ✅✅ **2026-09-09 00:00Z (session 68) — LIVE ON THE V8.53 SEPOLIA PRIVATE CHAIN (router `0x70c292be…1B96`,
+      book `deployed_addresses_v8_53_private.json`):** `set_pauser.js` → pauser `0x8295…8531` (hot rehearsal key,
+      SET OK) · `postdeploy_check.js` pauser row **PASS** (ALL PASS with upkeepCaller / floor $100 / graduation ON /
+      gate 46 VERIFIED) · `sf_floor_watchdog.js` dry-run correct, unfunded key → `PAUSE FAILED insufficient funds`
+      cleanly, funded → **`PAUSING … tx 0x579b7eb8…ed77 block 46571871 status 1`**, next tick `ALREADY PAUSED` ·
+      owner unpause via NEW `scripts/pause_control.js` (`ACTION=status|pause|unpause`, the item-3 ready-to-paste
+      commands) → tx `0x6d4d078d…441e` block 46571938 `RUNNING OK`. P2 is proven end to end; what remains for
+      mainnet is operational: generate the REAL pauser key on the VPS (never on the PC), cron line for the watchdog,
+      member notice template (item 3 text), and the P4 page.
       (2) Human triggers, owner's refinements:
       Blockaid re-flag → pause, investigate, UNPAUSE while dealing with Blockaid if the code is
       clean; silent keeper → ALERT first (Telegram silent-job alert exists), pause only if still
@@ -135,7 +144,10 @@ before the no-manual-top-up policy — both templates are re-cut when the runboo
       renounced only from the new admin). ⛔ R16 (`deploy_v8.js`): `ADMIN_WALLET_ADDRESS` ≠ deployer is
       now REFUSED up front — the deploy wires ~40 contracts with onlyOwner setters signed by the
       deployer, so the old template's "or a Gnosis Safe address" would have died mid-deploy. Ownership
-      moves AFTER deploy. STILL OWED: the mainnet ACCEPT mechanics — 37 signatures from the Trezor;
+      moves AFTER deploy. ✅ 2026-09-09 (session 68) `--census` LIVE on the V8.53 private chain: 42 rows (37 Ownable2Step
+      `pending -`, 3 Ownable, 2 role admins), every owner = deployer, 0 FAIL — run it as `TO_MODE=census npx hardhat
+      run … --network baseSepolia` (plain `node` hits the in-process chain and `chain_guard` refuses, as it should).
+      STILL OWED: the mainnet ACCEPT mechanics — 37 signatures from the Trezor;
       recommended = a small `admin/accept_ownership.html` page (connect Trezor via MetaMask, walks the
       book, one confirm per contract), rehearsed on the V8.53 Sepolia private deploy with a hot key
       first; a Sepolia rehearsal of pause + unpause + one setter signed from the hardware wallet;
@@ -272,7 +284,7 @@ keeper start order, and the owner human test with a $10 real registration + with
 
 1. Blockaid nudge from 09-08 morning local (G1). Re-test after any reply.
 2. ~~T1, T1b, T2-contracts, T4, T5 all proven live (09-07).~~
-3. ~~P2 + P3 decided (automated pauser role; hardware-wallet owner now, Safe later).~~ ~~pauser role built.~~ ~~postdeploy_check pauser row~~ ~~watchdog keeper + keeper_env (T9)~~ (09-08). ~~withdraw-while-paused test (18 passing)~~ ~~ownership-transfer + accept scripts, rehearsed (11 passing)~~ (09-08). Next: V8.53 Sepolia PRIVATE deploy (`deployed_addresses_v8_53_private`) to run the watchdog's live pause tx + set_pauser + postdeploy_check pauser row for real → `accept_ownership.html` admin page → wire the 11 live keepers to `keeper_env.js` → owner's T2-open decision (T9) → P4 incident page.
+3. ~~P2 + P3 decided (automated pauser role; hardware-wallet owner now, Safe later).~~ ~~pauser role built.~~ ~~postdeploy_check pauser row~~ ~~watchdog keeper + keeper_env (T9)~~ (09-08). ~~withdraw-while-paused test (18 passing)~~ ~~ownership-transfer + accept scripts, rehearsed (11 passing)~~ (09-08). ~~V8.53 Sepolia PRIVATE deploy → watchdog live pause tx + set_pauser + pauser row + owner unpause (`pause_control.js`) + census, all LIVE~~ (09-09, session 68; R17 registered on the way — deployer wallet must be quiet during a deploy: `GO_LIVE_RUNBOOK.md` 0.2-PRIVATE + `deploy_v8.js` foreign-tx guard). Next: `accept_ownership.html` admin page, rehearsed on the V8.53 private chain with a hot key (`--propose` → page accepts 37 → `--verify` → `--renounce-roles`) → wire the 11 live keepers to `keeper_env.js` → owner's T2-open decision (T9) → P4 incident page.
 4. G4 disclosure line + G5 bounty text — drafted in the owner's voice, owner sets the amounts.
 5. G2 measurement window: agree start block (V8.52 first organic registration) and run it.
 6. `MAINNET_DEPLOY_RUNBOOK.md` (§4) once T1/T2/T4 are landed.
