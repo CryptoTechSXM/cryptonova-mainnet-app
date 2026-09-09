@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Accept Ownership — CryptoNova Admin</title>
+  <!--
+    admin/accept_ownership.html — the ACCEPT side of P3 (MAINNET_READINESS §2), signed by the NEW owner
+    from the wallet extension (MetaMask/Rabby + Trezor on mainnet; any injected wallet on Sepolia).
+
+    Built 2026-09-09 (session 69). Mirrors scripts/accept_ownership.js exactly: the same TWO_STEP list,
+    the same tiers.T*.{pm,matA,matB} walk, the same owner()/pendingOwner() probe per row, one
+    acceptOwnership() per row, then re-read. It NEVER holds a key. The 1-step and role rows are shown
+    read-only so this page doubles as the --verify view for whoever holds the wallet.
+
+    Flow: load the addresses book (file or paste) → connect the wallet → the page refuses unless the
+    wallet's chain == book.chainId → table of every row with its live owner/pending state →
+    "Accept all pending → me" walks the rows one at a time, one wallet confirm each, stopping on the
+    first failure. Idempotent: rows already owned by you are skipped. Refresh re-reads everything.
+
+    Rehearsal (V8.53 Sepolia private chain): transfer_ownership --propose <wallet> from the deployer,
+    accept here from that wallet, transfer_ownership --verify <wallet> green.
+  -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.1/ethers.umd.min.js"></script>
+  <style>
+    :root{--bg:#0a0e1a;--bg2:#111827;--bg3:#1a2236;--border:#1f2d47;--green:#00e5a0;--green-dim:rgba(0,229,160,.12);--blue:#3b82f6;--yellow:#f59e0b;--red:#ef4444;--text:#e2e8f0;--text2:#94a3b8;--text3:#64748b}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;line-height:1.5}
+    header{background:var(--bg2);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .logo{display:flex;align-items:center;gap:10px}
+    .logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--green),var(--blue));border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;color:#000}
+    .logo-text{font-size:18px;font-weight:700;letter-spacing:-.5px}
+    .logo-text span{color:var(--green)}
+    main{max-width:1100px;margin:0 auto;padding:28px 20px 80px}
+    h1{font-size:24px;font-weight:800;margin-bottom:4px}
+    .sub{font-size:13px;color:var(--text3);margin-bottom:24px}
+    .card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:18px}
+    .card h2{font-size:14px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+    .kv{font-size:13px;color:var(--text2)}
+    .kv b{color:var(--text);font-family:monospace}
+    button{background:var(--green);color:#000;border:none;border-radius:8px;padding:9px 16px;font-weight:700;font-size:13px;cursor:pointer}
+    button.secondary{background:var(--bg3);color:var(--text);border:1px solid var(--border)}
+    button.danger{background:var(--red);color:#fff}
+    button:disabled{opacity:.45;cursor:not-allowed}
+    textarea{width:100%;min-height:90px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:monospace;font-size:12px;padding:10px}
+    input[type=file]{color:var(--text2);font-size:13px}
+    .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.3px}
+    .pill.green{background:var(--green-dim);color:var(--green)}
+    .pill.yellow{background:rgba(245,158,11,.14);color:var(--yellow)}
+    .pill.red{background:rgba(239,68,68,.14);color:var(--red)}
+    .pill.grey{background:var(--bg3);color:var(--text3)}
+    .pill.blue{background:rgba(59,130,246,.15);color:var(--blue)}
+    table{width:100%;border-collapse:collapse;font-size:12.5px}
+    th{text-align:left;color:var(--text3);font-weight:600;font-size:11px;letter-spacing:.5px;text-transform:uppercase;padding:8px 6px;border-bottom:1px solid var(--border)}
+    td{padding:8px 6px;border-bottom:1px solid rgba(31,45,71,.5);vertical-align:middle}
+    td.mono{font-family:monospace;font-size:11.5px;color:var(--text2)}
+    td.mono a{color:var(--text2);text-decoration:none;border-bottom:1px dotted var(--text3)}
+    .warn{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.35);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--text2);margin-bottom:14px}
+    .warn b{color:var(--red)}
+    .note{background:var(--bg3);border-radius:10px;padding:12px 14px;font-size:12.5px;color:var(--text2);margin-top:12px}
+    #log{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;font-family:monospace;font-size:11.5px;color:var(--text2);max-height:260px;overflow:auto;white-space:pre-wrap}
+    .counts{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--text2);margin:8px 0 12px}
+    .counts b{color:var(--text)}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo"><div class="logo-icon">CN</div><div class="logo-text">Crypto<span>Nova</span> · Admin</div></div>
+    <div class="kv">accept_ownership.html · read-only until you click Accept · holds no keys</div>
+  </header>
+  <main>
+    <h1>Accept Ownership</h1>
+    <div class="sub">P3 — the new owner (hardware wallet) accepts every pending <code>Ownable2Step</code> contract in a deployment book, one confirm each.</div>
+
+    <div class="warn"><b>Before you accept:</b> the deployer must already have run <code>transfer_ownership.js --propose &lt;this wallet&gt;</code> on this book. This page only accepts what is pending to the connected wallet; it cannot propose, and it refuses to act on the wrong chain.</div>
+
+    <div class="card">
+      <h2>1 · Addresses book</h2>
+      <div class="row">
+        <input type="file" id="bookFile" accept=".json,application/json" />
+        <span class="kv">or paste the book JSON below and click Load</span>
+      </div>
+      <textarea id="bookText" placeholder='{"network":"...","chainId":84532,"tierRouter":"0x...","tiers":{"T1":{"pm":"0x...","matA":"0x...","matB":"0x..."}}}'></textarea>
+      <div class="row" style="margin-top:10px">
+        <button class="secondary" id="btnLoad">Load pasted JSON</button>
+        <span class="kv" id="bookInfo">no book loaded</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>2 · Wallet</h2>
+      <div class="row">
+        <button id="btnConnect">Connect wallet</button>
+        <button class="secondary" id="btnSwitch" style="display:none">Switch wallet to the book's chain</button>
+        <span class="kv" id="walletInfo">not connected</span>
+      </div>
+      <div class="kv" id="chainInfo"></div>
+    </div>
+
+    <div class="card">
+      <h2>3 · Contracts</h2>
+      <div class="row">
+        <button class="secondary" id="btnRefresh" disabled>↻ Read all rows</button>
+        <button id="btnAcceptAll" disabled>Accept all pending → me</button>
+        <span class="kv" id="progress"></span>
+      </div>
+      <div class="counts" id="counts"></div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>#</th><th>Row</th><th>Contract</th><th>Kind</th><th>Owner</th><th>Pending</th><th>Status</th><th></th></tr></thead>
+          <tbody id="rows"><tr><td colspan="8" style="color:var(--text3)">Load a book and connect a wallet.</td></tr></tbody>
+        </table>
+      </div>
+      <div class="note">
+        <b>Kinds.</b> <b>2-step</b> rows need your <code>acceptOwnership()</code> — that is what this page sends. <b>1-step</b> rows
+        (matrixKeeper, v8Governance, pairFactory) and <b>role</b> rows (cnova, communityWallet) are changed by the deployer's
+        <code>--propose</code> run and are shown here read-only so you can see the whole census. Green everywhere = ready for
+        <code>transfer_ownership.js --verify</code>.
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Log</h2>
+      <div id="log"></div>
+    </div>
+  </main>
+
+<script>
+(() => {
+  // ── same lists as scripts/transfer_ownership.js / accept_ownership.js — keep in lock-step ──
+  const TWO_STEP = ["treasury", "stabilityFund", "buybackReserve", "tierRouter", "communityWallet", "directSale", "couponRegistry"];
+  const ONE_STEP = ["matrixKeeper", "v8Governance", "pairFactory"];
+  const ROLES    = { cnova: ["DEFAULT_ADMIN_ROLE"], communityWallet: ["DEFAULT_ADMIN_ROLE", "GOVERNOR_ROLE"] };
+  const ABI = [
+    "function owner() view returns (address)",
+    "function pendingOwner() view returns (address)",
+    "function acceptOwnership()",
+    "function hasRole(bytes32,address) view returns (bool)",
+    "function GOVERNOR_ROLE() view returns (bytes32)",
+  ];
+  const EXPLORER = { 8453: "https://basescan.org", 84532: "https://sepolia.basescan.org" };
+  const NAMES    = { 8453: "Base mainnet", 84532: "Base Sepolia", 31337: "hardhat" };
+
+  let book = null, bookLabel = "", rows = [], provider = null, signer = null, me = null, walletChain = null, busy = false;
+
+  const $ = id => document.getElementById(id);
+  const short = a => a ? a.slice(0, 6) + "…" + a.slice(-4) : "—";
+  const log = (m) => { const el = $("log"); el.textContent += `[${new Date().toISOString().slice(11, 19)}] ${m}\n`; el.scrollTop = el.scrollHeight; };
+  const eq = (a, b) => !!a && !!b && a.toLowerCase() === b.toLowerCase();
+
+  function buildRows(b) {
+    const out = [];
+    for (const k of TWO_STEP) if (b[k]) out.push({ label: k, addr: b[k], kind: "2step" });
+    for (const [t, v] of Object.entries(b.tiers || {})) for (const f of ["pm", "matA", "matB"]) if (v[f]) out.push({ label: `tiers.${t}.${f}`, addr: v[f], kind: "2step" });
+    for (const k of ONE_STEP) if (b[k]) out.push({ label: k, addr: b[k], kind: "1step" });
+    for (const [k, roles] of Object.entries(ROLES)) if (b[k]) out.push({ label: `${k} (roles)`, addr: b[k], kind: "roles", roleNames: roles });
+    return out;
+  }
+
+  function loadBook(text, label) {
+    let b;
+    try { b = JSON.parse(text); } catch (e) { $("bookInfo").textContent = "not valid JSON"; log("book: not valid JSON"); return; }
+    if (!b.tiers || !b.tierRouter) { $("bookInfo").textContent = "this JSON has no tierRouter/tiers — not a deployment book"; log("book: missing tierRouter/tiers"); return; }
+    if (b.chainId === undefined) { $("bookInfo").textContent = "book has NO chainId field — refusing (mainnet books must carry it)"; log("book: no chainId — refused"); return; }
+    book = b; bookLabel = label; rows = buildRows(b);
+    const n2 = rows.filter(r => r.kind === "2step").length;
+    $("bookInfo").innerHTML = `<b>${label}</b> · ${b.network || ""} · chainId <b>${b.chainId}</b> (${NAMES[b.chainId] || "unknown chain"}) · ${rows.length} rows (${n2} two-step)`;
+    log(`book loaded: ${label} chainId ${b.chainId} rows ${rows.length} (2-step ${n2})`);
+    renderRows(); gate();
+  }
+
+  $("bookFile").addEventListener("change", (ev) => {
+    const f = ev.target.files[0]; if (!f) return;
+    const r = new FileReader(); r.onload = () => loadBook(String(r.result), f.name); r.readAsText(f);
+  });
+  $("btnLoad").addEventListener("click", () => loadBook($("bookText").value, "pasted"));
+
+  async function connect() {
+    if (!window.ethereum) { $("walletInfo").textContent = "no wallet extension found (MetaMask / Rabby)"; return; }
+    try {
+      provider = new ethers.BrowserProvider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      signer = await provider.getSigner(); me = await signer.getAddress();
+      walletChain = Number((await provider.getNetwork()).chainId);
+      $("walletInfo").innerHTML = `<b>${me}</b>`;
+      log(`wallet ${me} on chain ${walletChain}`);
+      window.ethereum.on && window.ethereum.on("chainChanged", () => location.reload());
+      window.ethereum.on && window.ethereum.on("accountsChanged", () => location.reload());
+    } catch (e) { $("walletInfo").textContent = "connect failed: " + (e.shortMessage || e.message); log("connect failed: " + (e.shortMessage || e.message)); }
+    gate();
+  }
+  $("btnConnect").addEventListener("click", connect);
+  $("btnSwitch").addEventListener("click", async () => {
+    try { await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x" + Number(book.chainId).toString(16) }] }); }
+    catch (e) { log("switch chain failed: " + (e.message || e)); }
+  });
+
+  // the chain guard — same rule as scripts/chain_guard.js: wallet chain must equal the book's chainId
+  function chainOk() { return book && walletChain !== null && Number(book.chainId) === walletChain; }
+  function gate() {
+    const ok = chainOk();
+    if (book && walletChain !== null) {
+      $("chainInfo").innerHTML = ok
+        ? `<span class="pill green">chain OK</span> wallet and book both on ${NAMES[walletChain] || walletChain}`
+        : `<span class="pill red">WRONG CHAIN</span> wallet is on ${NAMES[walletChain] || walletChain}, the book is chainId ${book.chainId} (${NAMES[book.chainId] || "?"}) — nothing will be sent`;
+      $("btnSwitch").style.display = ok ? "none" : "";
+    }
+    $("btnRefresh").disabled = !(book && provider) || busy;
+    $("btnAcceptAll").disabled = !ok || busy || !rows.some(r => r.state === "PENDING_ME");
+  }
+
+  async function probe(r) {
+    const c = new ethers.Contract(r.addr, ABI, provider);
+    r.err = null;
+    try {
+      if (r.kind === "roles") {
+        r.roles = {};
+        for (const n of r.roleNames) {
+          const id = n === "DEFAULT_ADMIN_ROLE" ? ethers.ZeroHash : await c[n]();
+          r.roles[n] = await c.hasRole(id, me);
+        }
+        r.state = Object.values(r.roles).every(Boolean) ? "ROLE_HELD" : "ROLE_MISSING";
+        return;
+      }
+      r.owner = await c.owner();
+      if (r.kind === "2step") {
+        r.pending = await c.pendingOwner();
+        if (eq(r.owner, me)) r.state = "OWNED_ME";
+        else if (eq(r.pending, me)) r.state = "PENDING_ME";
+        else if (r.pending && r.pending !== ethers.ZeroAddress) r.state = "PENDING_OTHER";
+        else r.state = "OWNED_OTHER";
+      } else {
+        r.pending = null;
+        r.state = eq(r.owner, me) ? "OWNED_ME" : "OWNED_OTHER";
+      }
+    } catch (e) { r.err = (e.shortMessage || e.message || String(e)).slice(0, 80); r.state = "READ_FAILED"; }
+  }
+
+  async function refreshAll() {
+    if (!book || !provider) return;
+    busy = true; gate();
+    log(`reading ${rows.length} rows as ${me || "(no wallet)"} …`);
+    for (let i = 0; i < rows.length; i++) { await probe(rows[i]); renderRows(); $("progress").textContent = `read ${i + 1}/${rows.length}`; }
+    busy = false; $("progress").textContent = ""; renderCounts(); gate();
+    log("read done");
+  }
+  $("btnRefresh").addEventListener("click", refreshAll);
+
+  async function acceptOne(r) {
+    if (!chainOk()) { log("refused: wrong chain"); return false; }
+    await probe(r);
+    if (r.state === "OWNED_ME") { log(`${r.label}: already owned — skip`); renderRows(); return true; }
+    if (r.state !== "PENDING_ME") { log(`${r.label}: not pending to ${short(me)} (state ${r.state}) — nothing to accept`); renderRows(); return false; }
+    const c = new ethers.Contract(r.addr, ABI, signer);
+    try {
+      r.state = "SENDING"; renderRows();
+      const tx = await c.acceptOwnership();
+      log(`${r.label}: acceptOwnership sent ${tx.hash}`);
+      r.state = "MINING"; renderRows();
+      const rc = await tx.wait();
+      log(`${r.label}: mined block ${rc.blockNumber} status ${rc.status}`);
+    } catch (e) {
+      log(`${r.label}: FAILED — ${(e.shortMessage || e.message || String(e)).slice(0, 120)}`);
+      await probe(r); renderRows(); return false;
+    }
+    await probe(r); renderRows();
+    if (r.state !== "OWNED_ME") { log(`${r.label}: mined but owner() still ${r.owner} — STOP and look`); return false; }
+    return true;
+  }
+
+  async function acceptAll() {
+    if (busy) return; busy = true; gate();
+    const todo = rows.filter(r => r.kind === "2step" && r.state === "PENDING_ME");
+    log(`accept all: ${todo.length} pending row(s) → ${me}. One wallet confirm each; stops on the first failure.`);
+    let done = 0;
+    for (const r of todo) {
+      $("progress").textContent = `accepting ${done + 1}/${todo.length}: ${r.label}`;
+      const ok = await acceptOne(r);
+      if (!ok) { log(`stopped after ${done} accept(s) — fix the failure, then click again (already-owned rows are skipped)`); break; }
+      done++;
+    }
+    $("progress").textContent = ""; busy = false; renderCounts(); gate();
+    log(`accept all finished: ${done}/${todo.length}`);
+    if (done === todo.length && todo.length > 0) log(`NEXT: run transfer_ownership.js --verify ${me} from the contracts repo — every row must read OK.`);
+  }
+  $("btnAcceptAll").addEventListener("click", acceptAll);
+
+  function pill(r) {
+    switch (r.state) {
+      case "OWNED_ME":      return `<span class="pill green">owned by you</span>`;
+      case "PENDING_ME":    return `<span class="pill yellow">pending → you</span>`;
+      case "PENDING_OTHER": return `<span class="pill red">pending → ${short(r.pending)}</span>`;
+      case "OWNED_OTHER":   return `<span class="pill grey">${r.kind === "2step" ? "not proposed to you" : "owned by " + short(r.owner)}</span>`;
+      case "ROLE_HELD":     return `<span class="pill green">roles held by you</span>`;
+      case "ROLE_MISSING":  return `<span class="pill grey">${Object.entries(r.roles || {}).map(([n, v]) => `${n.replace("_ROLE", "")}: ${v ? "✓" : "✗"}`).join(" · ")}</span>`;
+      case "SENDING":       return `<span class="pill blue">confirm in wallet…</span>`;
+      case "MINING":        return `<span class="pill blue">mining…</span>`;
+      case "READ_FAILED":   return `<span class="pill red" title="${r.err || ""}">read failed</span>`;
+      default:              return `<span class="pill grey">not read</span>`;
+    }
+  }
+  function renderRows() {
+    const ex = EXPLORER[book && book.chainId];
+    $("rows").innerHTML = rows.map((r, i) => `
+      <tr>
+        <td style="color:var(--text3)">${i + 1}</td>
+        <td>${r.label}</td>
+        <td class="mono">${ex ? `<a href="${ex}/address/${r.addr}" target="_blank" rel="noopener">${short(r.addr)}</a>` : short(r.addr)}</td>
+        <td><span class="pill ${r.kind === "2step" ? "blue" : "grey"}">${r.kind}</span></td>
+        <td class="mono">${r.kind === "roles" ? "—" : (r.owner ? short(r.owner) : "—")}</td>
+        <td class="mono">${r.kind === "2step" ? (r.pending && r.pending !== ethers.ZeroAddress ? short(r.pending) : "—") : "n/a"}</td>
+        <td>${pill(r)}</td>
+        <td>${r.kind === "2step" && r.state === "PENDING_ME" ? `<button data-i="${i}" class="acceptOne" ${busy ? "disabled" : ""}>Accept</button>` : ""}</td>
+      </tr>`).join("");
+    for (const b of document.querySelectorAll("button.acceptOne")) b.addEventListener("click", async (ev) => {
+      if (busy) return; busy = true; gate();
+      await acceptOne(rows[Number(ev.target.dataset.i)]);
+      busy = false; renderCounts(); gate();
+    });
+  }
+  function renderCounts() {
+    const c = {}; for (const r of rows) c[r.state] = (c[r.state] || 0) + 1;
+    const two = rows.filter(r => r.kind === "2step");
+    $("counts").innerHTML = `
+      <span>2-step rows: <b>${two.length}</b></span>
+      <span>owned by you: <b>${two.filter(r => r.state === "OWNED_ME").length}</b></span>
+      <span>pending → you: <b>${two.filter(r => r.state === "PENDING_ME").length}</b></span>
+      <span>not yours / not proposed: <b>${two.filter(r => r.state === "OWNED_OTHER" || r.state === "PENDING_OTHER").length}</b></span>
+      <span>read failed: <b>${c.READ_FAILED || 0}</b></span>`;
+  }
+})();
+</script>
+</body>
+</html>

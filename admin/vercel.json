@@ -7,6 +7,8 @@
     { "source": "/terms.html", "destination": "/terms.html" },
     { "source": "/faq",        "destination": "/faq.html" },
     { "source": "/faq.html",   "destination": "/faq.html" },
+    { "source": "/accept_ownership",      "destination": "/accept_ownership.html" },
+    { "source": "/accept_ownership.html", "destination": "/accept_ownership.html" },
     { "source": "/(.*)",       "destination": "/index.html" }
   ]
 }
